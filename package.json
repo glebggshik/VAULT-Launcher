@@ -14,6 +14,7 @@
     "appId": "com.vault.launcher",
     "productName": "VAULT Launcher",
     "copyright": "MIT",
+    "asar": false,
     "directories": {
       "output": "dist",
       "buildResources": "assets"
@@ -21,11 +22,8 @@
     "files": [
       "src/**/*",
       "assets/**/*",
-      "package.json",
-      "!node_modules/**/*",
-      "!dist/**/*"
+      "package.json"
     ],
-    "extraResources": [],
     "win": {
       "target": [
         { "target": "nsis", "arch": ["x64"] },
