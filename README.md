@@ -2,22 +2,21 @@
 
 > Игровой лаунчер с glassmorphism UI для Steam и локальных игр.  
 > Поиск игр через Steam Store API + RAWG, трекинг времени, папки, темы.
-> 
-> Установщик по ссылке: https://disk.yandex.ru/d/7YkoSqAFbcnvVg
----
-
-## Требования
-
-| | Linux | Windows |
-|---|---|---|
-| Node.js | ≥ 18 | ≥ 18 |
-| npm | ≥ 9 | ≥ 9 |
-| Wine (для .exe) | wine / wine64 | не нужен |
-| Steam | опционально | опционально |
 
 ---
 
-## Установка и запуск
+## Скачать
+
+Готовый установщик для Windows — на странице [Releases](../../releases/latest):
+
+- **`VAULT Launcher Setup.exe`** — установщик (рекомендуется)
+- **`VAULT Launcher.exe`** — portable, без установки
+
+Node.js и npm **не нужны** — всё упаковано внутри.
+
+---
+
+## Запуск из исходников
 
 ### Linux (Arch / Manjaro / Ubuntu / Fedora)
 
@@ -34,35 +33,29 @@ sudo apt install nodejs npm
 sudo dnf install nodejs npm
 ```
 
-**2. Распакуй архив и перейди в папку**
+**2. Клонируй репозиторий**
 
 ```bash
-unzip vault-launcher.zip
-cd vault-launcher
+git clone https://github.com/glebggshik/VAULT-Launcher.git
+cd VAULT-Launcher
 ```
 
-**3. Установи зависимости**
+**3. Установи зависимости и запусти**
 
 ```bash
 npm install
-```
-
-**4. Запусти**
-
-```bash
 npm start
 ```
 
 **Ярлык на рабочий стол (опционально)**
 
-Создай файл `~/.local/share/applications/vault-launcher.desktop`:
+Создай `~/.local/share/applications/vault-launcher.desktop`:
 
 ```ini
 [Desktop Entry]
 Name=VAULT Launcher
-Comment=Game Launcher
-Exec=bash -c "cd /полный/путь/к/vault-launcher && npm start"
-Icon=/полный/путь/к/vault-launcher/assets/icon.png
+Exec=bash -c "cd /полный/путь/к/VAULT-Launcher && npm start"
+Icon=/полный/путь/к/VAULT-Launcher/assets/icon.png
 Terminal=false
 Type=Application
 Categories=Game;
@@ -73,11 +66,8 @@ chmod +x ~/.local/share/applications/vault-launcher.desktop
 update-desktop-database ~/.local/share/applications
 ```
 
-> **Fish shell:** замени `bash -c` на `fish -c` в строке Exec,
-> или создай скрипт-обёртку `start.sh` (`#!/bin/sh` + `cd /путь && npm start`)
-> и укажи его путь в Exec.
-
----
+> **Fish shell:** замени `bash -c` на `fish -c`, или создай скрипт-обёртку `start.sh`
+> (`#!/bin/sh` + `cd /путь && npm start`) и укажи его в Exec.
 
 **Запуск .exe игр на Linux**
 
@@ -89,35 +79,39 @@ sudo apt install wine     # Ubuntu / Debian
 sudo dnf install wine     # Fedora
 ```
 
-VAULT автоматически обнаружит Wine и будет запускать .exe через него.
-Если Wine не найден — при запуске появится ошибка с инструкцией.
-
-Альтернатива: добавь игру в Steam как «Стороннее приложение» — Steam использует Proton автоматически.
+VAULT автоматически обнаружит Wine. Альтернатива — добавь игру в Steam как «Стороннее приложение», тогда используется Proton.
 
 ---
 
-### Windows
-
-**1. Установи Node.js** — скачай с [nodejs.org](https://nodejs.org) (LTS версия).
-
-**2. Распакуй архив** в удобную папку, например `C:\vault-launcher`.
-
-**3. Открой PowerShell в папке** (ПКМ → «Открыть в терминале»):
+### Windows (из исходников)
 
 ```powershell
+git clone https://github.com/glebggshik/VAULT-Launcher.git
+cd VAULT-Launcher
 npm install
 npm start
 ```
 
-**Ярлык:** создай `start.bat` в папке:
+---
 
-```bat
-@echo off
-cd /d %~dp0
-npm start
+## Сборка установщика
+
+Установщик собирается автоматически через GitHub Actions при создании тега:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-Сделай ярлык на этот .bat файл и перемести на рабочий стол.
+Через ~5 минут в разделе **Releases** появится готовый `.exe`.
+
+Для ручной сборки на Windows:
+
+```powershell
+npm install
+npm run build:win
+# Результат в папке dist/
+```
 
 ---
 
@@ -132,9 +126,9 @@ RAWG — бесплатная база данных игр (рейтинги, ж
 2. Нажми **Get API key** и зарегистрируйся
 3. Вставь ключ в поле и нажми «Сохранить»
 
-Если пропустить — поиск работает только через Steam Store (название + App ID).
+Можно пропустить — поиск будет работать только через Steam Store.
 
-> Если ключ истечёт или станет недействительным, экран ввода появится снова автоматически.
+> Если ключ истечёт или станет недействительным, экран появится снова автоматически.
 
 ---
 
@@ -148,14 +142,16 @@ RAWG — бесплатная база данных игр (рейтинги, ж
 - ✏️ Редактирование всей информации об игре включая часы
 - 🎨 4 темы + кастомный цвет акцента
 - 🐧 Linux: Wine для .exe, нативные бинарники напрямую
-- 🖥 Windows: .exe напрямую
+- 🖥 Windows: установщик или portable .exe
 
 ---
 
 ## Структура проекта
 
 ```
-vault-launcher/
+VAULT-Launcher/
+├── .github/workflows/
+│   └── main.yml           # GitHub Actions — сборка и релиз
 ├── src/
 │   ├── main/
 │   │   ├── main.js        # Electron main process
@@ -166,9 +162,11 @@ vault-launcher/
 │       ├── settings.html  # Настройки
 │       ├── settings.js    # Логика настроек
 │       └── style.css      # Стили
-├── assets/
+├── assets/                # Иконки (png, ico, svg)
+├── installer/             # NSIS скрипт
 ├── package.json
-└── README.md
+├── README.md
+└── README.txt
 ```
 
 ## Данные приложения
