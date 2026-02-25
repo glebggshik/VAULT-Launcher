@@ -19,6 +19,7 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+        cache-dependency-path: '**/package-lock.json'
       
       - name: Build Windows installer
         run: npm run build:win
