@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>VAULT — Настройки</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ─── Settings-specific styles ─────────────────────────────────────────────── */
+.settings-wrap {
+  height: calc(100vh - var(--titlebar-h));
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left nav */
+.settings-nav {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--glass-border);
+  padding: 24px 12px;
+  overflow-y: auto;
+  background: rgba(4,7,14,0.6);
+}
+.settings-nav-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--text-muted); text-transform: uppercase;
+  padding: 0 10px 12px;
+}
+.snav-item {
+  width: 100%; padding: 9px 12px;
+  border-radius: 10px; border: none;
+  background: transparent; color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 0.5px; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.15s; margin-bottom: 2px;
+}
+.snav-item:hover { background: var(--glass-hover); color: var(--text-primary); }
+.snav-item.active { background: rgba(0,245,255,0.08); border: 1px solid rgba(0,245,255,0.18); color: var(--neon-cyan); }
+.snav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.snav-group-label {
+  font-size: 9px; letter-spacing: 2px; color: var(--text-muted);
+  text-transform: uppercase; font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  padding: 14px 12px 4px; opacity: 0.6;
+}
+
+/* Content */
+.settings-content {
+  flex: 1; overflow-y: auto; padding: 32px 40px;
+}
+.settings-content::-webkit-scrollbar { width: 4px; }
+.settings-content::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.15); border-radius: 2px; }
+
+.settings-section { display: none; }
+.settings-section.active { display: block; animation: fadeSlideIn 0.25s ease; }
+
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.section-icon { font-size: 26px; }
+.section-title {
+  font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+.section-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* Cards */
+.settings-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 20px 22px;
+  margin-bottom: 14px;
+}
+.settings-card-title {
+  font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; color: var(--text-primary); margin-bottom: 4px;
+}
+.settings-card-desc {
+  font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;
+}
+
+/* Row */
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.setting-row:last-child { border-bottom: none; padding-bottom: 0; }
+.setting-row:first-child { padding-top: 0; }
+
+.setting-label { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.setting-label-text { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.3px; }
+.setting-label-hint { font-size: 11px; color: var(--text-muted); }
+
+/* Toggle switch */
+.toggle {
+  position: relative; width: 44px; height: 24px; flex-shrink: 0; cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; border-radius: 24px;
+  background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
+  transition: all 0.25s;
+}
+.toggle input:checked + .toggle-track {
+  background: rgba(0,245,255,0.2); border-color: rgba(0,245,255,0.5);
+  box-shadow: 0 0 12px rgba(0,245,255,0.2);
+}
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--text-muted); transition: all 0.25s;
+}
+.toggle input:checked ~ .toggle-thumb {
+  left: 23px; background: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0,245,255,0.6);
+}
+
+/* Select */
+.setting-select {
+  padding: 7px 12px; border-radius: 9px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+  color: var(--text-primary); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600; outline: none; cursor: pointer;
+  min-width: 160px; transition: border-color 0.2s;
+}
+.setting-select:focus { border-color: rgba(0,245,255,0.4); }
+.setting-select option { background: #0a0f1e; }
+
+/* Slider */
+.setting-slider-wrap { display: flex; align-items: center; gap: 12px; }
+.setting-slider {
+  -webkit-appearance: none; width: 140px; height: 4px;
+  border-radius: 2px; background: rgba(255,255,255,0.1); outline: none; cursor: pointer;
+}
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--neon-cyan); cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,245,255,0.5);
+}
+.slider-value {
+  font-family: 'Orbitron', monospace; font-size: 11px; color: var(--neon-cyan);
+  min-width: 36px; text-align: right;
+}
+
+/* Color accent picker */
+.accent-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.accent-dot {
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.2s; position: relative;
+}
+.accent-dot.active {
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+}
+.accent-dot::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: white; opacity: 0;
+}
+.accent-dot.active::after { opacity: 1; }
+
+/* Custom color input */
+.custom-color-wrap { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.color-input-native { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; background: none; padding: 2px; }
+.custom-color-hex {
+  width: 100px; padding: 6px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+  color: var(--text-primary); font-family: 'Orbitron', monospace; font-size: 11px;
+  outline: none; letter-spacing: 1px;
+}
+
+/* Theme preview */
+.theme-cards { display: flex; gap: 10px; margin-top: 4px; }
+.theme-card {
+  flex: 1; border-radius: 12px; overflow: hidden;
+  border: 2px solid var(--glass-border); cursor: pointer; transition: all 0.2s;
+}
+.theme-card.active { border-color: var(--neon-cyan); box-shadow: 0 0 16px rgba(0,245,255,0.2); }
+.theme-preview { height: 64px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.theme-dot { width: 8px; height: 8px; border-radius: 50%; }
+.theme-label { text-align: center; padding: 6px; font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); }
+.theme-card.active .theme-label { color: var(--neon-cyan); }
+
+/* Folder list */
+.folder-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.folder-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+  border-radius: 9px;
+}
+.folder-path { flex: 1; font-size: 12px; color: var(--text-muted); font-family: 'Inter', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; transition: all 0.15s; }
+.folder-remove:hover { color: #ff4444; background: rgba(255,0,60,0.1); }
+.folder-add-btn {
+  padding: 8px 16px; border-radius: 9px;
+  background: rgba(0,245,255,0.07); border: 1px solid rgba(0,245,255,0.2);
+  color: var(--neon-cyan); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.folder-add-btn:hover { background: rgba(0,245,255,0.14); }
+
+/* Scan progress */
+.scan-bar-wrap { margin-top: 10px; display: none; }
+.scan-bar-track { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+.scan-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple)); width: 0%; transition: width 0.3s; }
+.scan-status { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+/* Keybind */
+.keybind-row { display: flex; align-items: center; gap: 10px; }
+.keybind-tag {
+  padding: 4px 10px; border-radius: 6px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+  font-family: 'Orbitron', monospace; font-size: 10px; color: var(--text-primary);
+  letter-spacing: 1px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.keybind-tag:hover { border-color: rgba(0,245,255,0.35); color: var(--neon-cyan); }
+.keybind-tag.listening { border-color: var(--neon-cyan); color: var(--neon-cyan); animation: blink 0.8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Input text */
+.setting-input {
+  padding: 7px 12px; border-radius: 9px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+  color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 13px;
+  outline: none; width: 200px; transition: border-color 0.2s;
+}
+.setting-input:focus { border-color: rgba(0,245,255,0.4); }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+.stat-tile {
+  background: rgba(0,245,255,0.04); border: 1px solid rgba(0,245,255,0.12);
+  border-radius: 12px; padding: 14px; text-align: center;
+}
+.stat-num { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 700; color: var(--neon-cyan); }
+.stat-label { font-size: 10px; color: var(--text-muted); font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; margin-top: 4px; }
+
+/* Danger zone */
+.danger-btn {
+  padding: 9px 18px; border-radius: 9px;
+  background: rgba(255,0,60,0.08); border: 1px solid rgba(255,0,60,0.25);
+  color: #ff6666; font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  transition: all 0.2s;
+}
+.danger-btn:hover { background: rgba(255,0,60,0.18); box-shadow: 0 0 20px rgba(255,0,60,0.1); }
+
+/* Save bar */
+.save-bar {
+  position: fixed; bottom: 0; left: calc(var(--sidebar-w) + 220px); right: 0;
+  background: rgba(4,8,18,0.97); border-top: 1px solid var(--glass-border);
+  padding: 14px 40px; display: flex; align-items: center; justify-content: space-between;
+  transform: translateY(100%); transition: transform 0.3s; z-index: 50;
+  backdrop-filter: blur(20px);
+}
+.save-bar.visible { transform: translateY(0); }
+.save-bar-text { font-family: 'Rajdhani', sans-serif; font-size: 13px; color: var(--text-muted); letter-spacing: 0.5px; }
+.save-bar-actions { display: flex; gap: 10px; }
+.btn-discard {
+  padding: 8px 16px; border-radius: 9px;
+  background: transparent; border: 1px solid var(--glass-border);
+  color: var(--text-muted); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+}
+.btn-discard:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.18); }
+.btn-save {
+  padding: 8px 20px; border-radius: 9px;
+  background: linear-gradient(135deg, rgba(0,245,255,0.18), rgba(191,0,255,0.18));
+  border: 1px solid rgba(0,245,255,0.4);
+  color: var(--neon-cyan); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1.5px; cursor: pointer; transition: all 0.2s;
+}
+.btn-save:hover { background: linear-gradient(135deg, rgba(0,245,255,0.28), rgba(191,0,255,0.28)); }
+
+/* Version badge */
+.version-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 20px;
+  background: rgba(0,245,255,0.07); border: 1px solid rgba(0,245,255,0.18);
+  font-family: 'Orbitron', monospace; font-size: 10px; color: var(--neon-cyan); letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <div class="titlebar-drag">
+    <span class="titlebar-logo">VAULT</span>
+    <span class="titlebar-version">v1.0 · Настройки</span>
+  </div>
+  <div class="titlebar-controls">
+    <button class="tbtn" onclick="goBack()" title="Назад в библиотеку">←</button>
+    <button class="tbtn tbtn-min" onclick="window.nexus?.window.minimize()">─</button>
+    <button class="tbtn tbtn-max" onclick="window.nexus?.window.maximize()">□</button>
+    <button class="tbtn tbtn-close" onclick="window.nexus?.window.close()">✕</button>
+  </div>
+</div>
+
+<!-- Sidebar (same as main) -->
+<nav class="sidebar">
+  <div class="nav-section">
+    <button class="nav-btn" onclick="goBack()" title="Библиотека">
+      <span class="nav-icon">🎮</span><span class="nav-label">Библиотека</span>
+    </button>
+    <button class="nav-btn active" title="Настройки">
+      <span class="nav-icon">⚙️</span><span class="nav-label">Настройки</span>
+    </button>
+  </div>
+</nav>
+
+<main class="main">
+<div class="settings-wrap">
+
+  <!-- Left nav -->
+  <nav class="settings-nav">
+    <div class="settings-nav-title">Настройки</div>
+
+    <div class="snav-group-label">Внешний вид</div>
+    <button class="snav-item active" onclick="showSection('appearance', this)">
+      <span class="snav-icon">🎨</span> Тема и цвета
+    </button>
+    <button class="snav-item" onclick="showSection('interface', this)">
+      <span class="snav-icon">🖥️</span> Интерфейс
+    </button>
+
+    <div class="snav-group-label">Библиотека</div>
+    <button class="snav-item" onclick="showSection('library', this)">
+      <span class="snav-icon">📁</span> Папки и сканирование
+    </button>
+    <button class="snav-item" onclick="showSection('games', this)">
+      <span class="snav-icon">🎮</span> Запуск игр
+    </button>
+
+    <div class="snav-group-label">Система</div>
+    <button class="snav-item" onclick="showSection('performance', this)">
+      <span class="snav-icon">⚡</span> Производительность
+    </button>
+    <button class="snav-item" onclick="showSection('notifications', this)">
+      <span class="snav-icon">🔔</span> Уведомления
+    </button>
+    <button class="snav-item" onclick="showSection('shortcuts', this)">
+      <span class="snav-icon">⌨️</span> Горячие клавиши
+    </button>
+    <button class="snav-item" onclick="showSection('language', this)">
+      <span class="snav-icon">🌐</span> Язык и регион
+    </button>
+
+    <div class="snav-group-label">О программе</div>
+    <button class="snav-item" onclick="showSection('about', this)">
+      <span class="snav-icon">ℹ️</span> О программе
+    </button>
+  </nav>
+
+  <!-- Content -->
+  <div class="settings-content">
+
+    <!-- ░░ APPEARANCE ░░ -->
+    <div class="settings-section active" id="sec-appearance">
+      <div class="section-header">
+        <div class="section-icon">🎨</div>
+        <div>
+          <div class="section-title">ТЕМА И ЦВЕТА</div>
+          <div class="section-sub">Внешний вид интерфейса NEXUS</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Тема оформления</div>
+        <div class="settings-card-desc">Общая цветовая схема интерфейса</div>
+        <div class="theme-cards">
+          <div class="theme-card active" onclick="setTheme('dark', this)" id="theme-dark">
+            <div class="theme-preview" style="background:#050810">
+              <div class="theme-dot" style="background:#00f5ff;box-shadow:0 0 8px #00f5ff"></div>
+              <div class="theme-dot" style="background:#bf00ff;box-shadow:0 0 8px #bf00ff"></div>
+              <div class="theme-dot" style="background:#ff006e;box-shadow:0 0 8px #ff006e"></div>
+            </div>
+            <div class="theme-label">ТЁМНАЯ</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('midnight', this)" id="theme-midnight">
+            <div class="theme-preview" style="background:#000408">
+              <div class="theme-dot" style="background:#4080ff;box-shadow:0 0 8px #4080ff"></div>
+              <div class="theme-dot" style="background:#8040ff;box-shadow:0 0 8px #8040ff"></div>
+              <div class="theme-dot" style="background:#40c0ff;box-shadow:0 0 8px #40c0ff"></div>
+            </div>
+            <div class="theme-label">ПОЛНОЧЬ</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('carbon', this)" id="theme-carbon">
+            <div class="theme-preview" style="background:#141414">
+              <div class="theme-dot" style="background:#ff6600;box-shadow:0 0 8px #ff6600"></div>
+              <div class="theme-dot" style="background:#ffaa00;box-shadow:0 0 8px #ffaa00"></div>
+              <div class="theme-dot" style="background:#ff3300;box-shadow:0 0 8px #ff3300"></div>
+            </div>
+            <div class="theme-label">CARBON</div>
+          </div>
+          <div class="theme-card" onclick="setTheme('matrix', this)" id="theme-matrix">
+            <div class="theme-preview" style="background:#000800">
+              <div class="theme-dot" style="background:#00ff41;box-shadow:0 0 8px #00ff41"></div>
+              <div class="theme-dot" style="background:#008f11;box-shadow:0 0 8px #008f11"></div>
+              <div class="theme-dot" style="background:#00ff41;box-shadow:0 0 8px #00ff41"></div>
+            </div>
+            <div class="theme-label">MATRIX</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Цвет акцента</div>
+        <div class="settings-card-desc">Основной неоновый цвет подсветки элементов</div>
+        <div class="accent-picker" id="accentPicker">
+          <div class="accent-dot active" style="background:#00f5ff;box-shadow:0 0 10px #00f5ff" data-color="#00f5ff" onclick="setAccent('#00f5ff',this)" title="Cyan"></div>
+          <div class="accent-dot" style="background:#bf00ff;box-shadow:0 0 10px #bf00ff" data-color="#bf00ff" onclick="setAccent('#bf00ff',this)" title="Purple"></div>
+          <div class="accent-dot" style="background:#ff006e;box-shadow:0 0 10px #ff006e" data-color="#ff006e" onclick="setAccent('#ff006e',this)" title="Pink"></div>
+          <div class="accent-dot" style="background:#00ff88;box-shadow:0 0 10px #00ff88" data-color="#00ff88" onclick="setAccent('#00ff88',this)" title="Green"></div>
+          <div class="accent-dot" style="background:#ff6600;box-shadow:0 0 10px #ff6600" data-color="#ff6600" onclick="setAccent('#ff6600',this)" title="Orange"></div>
+          <div class="accent-dot" style="background:#4080ff;box-shadow:0 0 10px #4080ff" data-color="#4080ff" onclick="setAccent('#4080ff',this)" title="Blue"></div>
+          <div class="accent-dot" style="background:#ffdd00;box-shadow:0 0 10px #ffdd00" data-color="#ffdd00" onclick="setAccent('#ffdd00',this)" title="Yellow"></div>
+          <div class="accent-dot" style="background:#ff4040;box-shadow:0 0 10px #ff4040" data-color="#ff4040" onclick="setAccent('#ff4040',this)" title="Red"></div>
+        </div>
+        <div class="custom-color-wrap">
+          <input type="color" class="color-input-native" id="customColor" value="#00f5ff" onchange="setAccentFromPicker(this.value)">
+          <input type="text" class="custom-color-hex" id="customColorHex" value="#00f5ff" placeholder="#00f5ff" maxlength="7" oninput="setAccentFromHex(this.value)">
+          <span style="font-size:11px;color:var(--text-muted)">Свой цвет</span>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Интенсивность эффектов</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Яркость неона</span>
+            <span class="setting-label-hint">Интенсивность свечения элементов</span>
+          </div>
+          <div class="setting-slider-wrap">
+            <input type="range" class="setting-slider" min="0" max="100" value="70" id="glowSlider" oninput="updateSlider('glowSlider','glowVal')">
+            <span class="slider-value" id="glowVal">70%</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Blur фона</span>
+            <span class="setting-label-hint">Размытие стеклянных элементов</span>
+          </div>
+          <div class="setting-slider-wrap">
+            <input type="range" class="setting-slider" min="0" max="100" value="60" id="blurSlider" oninput="updateSlider('blurSlider','blurVal')">
+            <span class="slider-value" id="blurVal">60%</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Фоновая сетка</span>
+            <span class="setting-label-hint">Сетка на фоне интерфейса</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Анимации</span>
+            <span class="setting-label-hint">Плавные переходы и эффекты</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ INTERFACE ░░ -->
+    <div class="settings-section" id="sec-interface">
+      <div class="section-header">
+        <div class="section-icon">🖥️</div>
+        <div>
+          <div class="section-title">ИНТЕРФЕЙС</div>
+          <div class="section-sub">Отображение библиотеки и карточек</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Библиотека</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Вид по умолчанию</span>
+            <span class="setting-label-hint">Сетка или список при открытии</span>
+          </div>
+          <select class="setting-select" id="defaultViewSelect" onchange="markChanged()">
+            <option>Сетка</option>
+            <option>Список</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Размер карточек</span>
+            <span class="setting-label-hint">Минимальная ширина карточки в сетке</span>
+          </div>
+          <div class="setting-slider-wrap">
+            <input type="range" class="setting-slider" min="140" max="280" value="175" id="cardSlider" oninput="updateSlider('cardSlider','cardVal','px')">
+            <span class="slider-value" id="cardVal">175px</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Сортировка по умолчанию</span>
+          </div>
+          <select class="setting-select" id="defaultSortSelect" onchange="markChanged()">
+            <option>По дате добавления</option>
+            <option>По названию</option>
+            <option>По времени игры</option>
+            <option>Последние запущенные</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Показывать время игры</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Показывать метку источника</span>
+            <span class="setting-label-hint">Бейджи Steam / Local на карточках</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Подтверждение удаления</span>
+            <span class="setting-label-hint">Спрашивать перед удалением игры</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Масштаб интерфейса</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Масштаб UI</span>
+            <span class="setting-label-hint">Общий зум приложения</span>
+          </div>
+          <select class="setting-select" id="uiScaleSelect" onchange="markChanged()">
+            <option>80%</option>
+            <option>90%</option>
+            <option selected>100%</option>
+            <option>110%</option>
+            <option>125%</option>
+            <option>150%</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Шрифт</span>
+          </div>
+          <select class="setting-select" id="uiFontSelect" onchange="markChanged()">
+            <option>Inter (системный)</option>
+            <option>Rajdhani</option>
+            <option>Orbitron</option>
+            <option>Monospace</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ LIBRARY / FOLDERS ░░ -->
+    <div class="settings-section" id="sec-library">
+      <div class="section-header">
+        <div class="section-icon">📁</div>
+        <div>
+          <div class="section-title">ПАПКИ И СКАНИРОВАНИЕ</div>
+          <div class="section-sub">Автоматический поиск установленных игр</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Папки сканирования</div>
+        <div class="settings-card-desc">NEXUS будет искать .exe файлы игр в этих папках</div>
+        <div class="folder-list" id="folderList">
+          <div class="folder-item">
+            <span style="font-size:16px">📂</span>
+            <span class="folder-path">C:\Games</span>
+            <button class="folder-remove" onclick="removeFolder(this)">✕</button>
+          </div>
+          <div class="folder-item">
+            <span style="font-size:16px">📂</span>
+            <span class="folder-path">D:\Games</span>
+            <button class="folder-remove" onclick="removeFolder(this)">✕</button>
+          </div>
+          <div class="folder-item">
+            <span style="font-size:16px">📂</span>
+            <span class="folder-path">C:\Program Files (x86)\Steam\steamapps\common</span>
+            <button class="folder-remove" onclick="removeFolder(this)">✕</button>
+          </div>
+        </div>
+        <button class="folder-add-btn" onclick="addFolder()">+ Добавить папку</button>
+
+        <div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="folder-add-btn" onclick="startScan()" id="scanBtn">
+            🔍 Сканировать сейчас
+          </button>
+          <span style="font-size:11px;color:var(--text-muted)" id="lastScanText">Последнее сканирование: никогда</span>
+        </div>
+        <div class="scan-bar-wrap" id="scanBarWrap">
+          <div class="scan-bar-track"><div class="scan-bar-fill" id="scanFill"></div></div>
+          <div class="scan-status" id="scanStatus">Подготовка...</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Параметры сканирования</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Автосканирование при запуске</span>
+            <span class="setting-label-hint">Искать новые игры при открытии лаунчера</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Глубина поиска</span>
+            <span class="setting-label-hint">Уровни вложенности папок</span>
+          </div>
+          <select class="setting-select" id="scanDepthSelect" onchange="markChanged()">
+            <option>2 уровня</option>
+            <option selected>3 уровня</option>
+            <option>4 уровня</option>
+            <option>Без ограничений</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Игнорировать системные папки</span>
+            <span class="setting-label-hint">Windows, System32, Program Files и т.д.</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Добавлять дубликаты</span>
+            <span class="setting-label-hint">Если игра уже есть в библиотеке</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ GAMES / LAUNCH ░░ -->
+    <div class="settings-section" id="sec-games">
+      <div class="section-header">
+        <div class="section-icon">🎮</div>
+        <div>
+          <div class="section-title">ЗАПУСК ИГР</div>
+          <div class="section-sub">Поведение при запуске и закрытии игр</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Поведение лаунчера</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Сворачивать при запуске игры</span>
+            <span class="setting-label-hint">NEXUS уйдёт в трей когда запустится игра</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Восстанавливать после закрытия игры</span>
+            <span class="setting-label-hint">Открыть лаунчер когда игра закрылась</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Закрыть в трей (не выходить)</span>
+            <span class="setting-label-hint">Кнопка × сворачивает в системный трей</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Запуск вместе с системой</span>
+            <span class="setting-label-hint">Автостарт при загрузке Windows / Linux</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Steam интеграция</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Путь к Steam</span>
+            <span class="setting-label-hint">Оставь пустым для автоопределения</span>
+          </div>
+          <input type="text" class="setting-input" placeholder="Авто" onchange="markChanged()">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Импортировать библиотеку Steam</span>
+            <span class="setting-label-hint">Добавить все установленные Steam-игры</span>
+          </div>
+          <button class="folder-add-btn" onclick="importSteam()">📥 Импорт</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Синхронизировать время игры со Steam</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Параметры запуска</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Задержка перед запуском</span>
+            <span class="setting-label-hint">Секунды ожидания после нажатия Play</span>
+          </div>
+          <select class="setting-select" id="launchDelaySelect" onchange="markChanged()">
+            <option>Без задержки</option>
+            <option selected>1 секунда</option>
+            <option>3 секунды</option>
+            <option>5 секунд</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Запускать от администратора</span>
+            <span class="setting-label-hint">Только для локальных игр (Windows)</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ PERFORMANCE ░░ -->
+    <div class="settings-section" id="sec-performance">
+      <div class="section-header">
+        <div class="section-icon">⚡</div>
+        <div>
+          <div class="section-title">ПРОИЗВОДИТЕЛЬНОСТЬ</div>
+          <div class="section-sub">Ресурсы и оптимизация</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Рендеринг</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Аппаратное ускорение</span>
+            <span class="setting-label-hint">GPU для рендеринга UI (выключить при глюках)</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Ограничить FPS интерфейса</span>
+            <span class="setting-label-hint">Снизить нагрузку когда игра запущена</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Ленивая загрузка обложек</span>
+            <span class="setting-label-hint">Загружать изображения только при прокрутке</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Кэш обложек</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Кэшировать обложки локально</span>
+            <span class="setting-label-hint">Сохранять изображения чтобы не грузить каждый раз</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Максимальный размер кэша</span>
+          </div>
+          <select class="setting-select" id="cacheLimitSelect" onchange="markChanged()">
+            <option>100 МБ</option>
+            <option selected>500 МБ</option>
+            <option>1 ГБ</option>
+            <option>Без ограничений</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Очистить кэш обложек</span>
+            <span class="setting-label-hint">Текущий размер: ~47 МБ</span>
+          </div>
+          <button class="danger-btn" onclick="clearCache()">🗑 Очистить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ NOTIFICATIONS ░░ -->
+    <div class="settings-section" id="sec-notifications">
+      <div class="section-header">
+        <div class="section-icon">🔔</div>
+        <div>
+          <div class="section-title">УВЕДОМЛЕНИЯ</div>
+          <div class="section-sub">Когда и как показывать уведомления</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Системные уведомления</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Уведомление о запуске игры</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Уведомление о закрытии игры</span>
+            <span class="setting-label-hint">Показать сколько времени провёл в игре</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Уведомление об ошибке запуска</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" checked onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Уведомление о найденных играх</span>
+            <span class="setting-label-hint">После сканирования папок</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Toast-уведомления внутри приложения</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Позиция</span>
+          </div>
+          <select class="setting-select" id="toastPosSelect" onchange="markChanged()">
+            <option>Снизу справа</option>
+            <option>Снизу слева</option>
+            <option>Сверху справа</option>
+            <option>Сверху слева</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Длительность</span>
+          </div>
+          <select class="setting-select" id="toastDurSelect" onchange="markChanged()">
+            <option>2 секунды</option>
+            <option selected>3.5 секунды</option>
+            <option>5 секунд</option>
+            <option>Не скрывать</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Звук уведомления</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" onchange="markChanged()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ SHORTCUTS ░░ -->
+    <div class="settings-section" id="sec-shortcuts">
+      <div class="section-header">
+        <div class="section-icon">⌨️</div>
+        <div>
+          <div class="section-title">ГОРЯЧИЕ КЛАВИШИ</div>
+          <div class="section-sub">Клик по клавише → нажми новое сочетание</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Навигация</div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Открыть поиск</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + F</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Перейти в настройки</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + ,</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Добавить игру</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + N</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Переключить вид (сетка/список)</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + G</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Игры</div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Запустить выбранную игру</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Enter</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Показать в проводнике</span></div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + E</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Глобальные (работают в трее)</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Показать/скрыть лаунчер</span>
+            <span class="setting-label-hint">Работает когда приложение в трее</span>
+          </div>
+          <div class="keybind-row">
+            <span class="keybind-tag" onclick="listenKey(this)">Ctrl + Shift + G</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ LANGUAGE ░░ -->
+    <div class="settings-section" id="sec-language">
+      <div class="section-header">
+        <div class="section-icon">🌐</div>
+        <div>
+          <div class="section-title">ЯЗЫК И РЕГИОН</div>
+          <div class="section-sub">Локализация интерфейса</div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Язык интерфейса</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Язык</span>
+            <span class="setting-label-hint">Требует перезапуска приложения</span>
+          </div>
+          <select class="setting-select" id="languageSelect" onchange="markChanged()">
+            <option selected>🇷🇺 Русский</option>
+            <option>🇬🇧 English</option>
+            <option>🇩🇪 Deutsch</option>
+            <option>🇫🇷 Français</option>
+            <option>🇵🇱 Polski</option>
+            <option>🇺🇦 Українська</option>
+            <option>🇯🇵 日本語</option>
+            <option>🇨🇳 中文</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Формат времени</div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Формат часов</span></div>
+          <select class="setting-select" id="timeFormatSelect" onchange="markChanged()">
+            <option selected>24-часовой (16:30)</option>
+            <option>12-часовой (4:30 PM)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Формат времени игры</span></div>
+          <select class="setting-select" id="hoursFormatSelect" onchange="markChanged()">
+            <option selected>Часы (142ч)</option>
+            <option>Ч:ММ (142:30)</option>
+            <option>Дни и часы (5 дн. 22ч)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><span class="setting-label-text">Дата последнего запуска</span></div>
+          <select class="setting-select" id="dateFormatSelect" onchange="markChanged()">
+            <option selected>Относительно (3 дня назад)</option>
+            <option>Абсолютно (12.01.2024)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ░░ ABOUT ░░ -->
+    <div class="settings-section" id="sec-about">
+      <div class="section-header">
+        <div class="section-icon">ℹ️</div>
+        <div>
+          <div class="section-title">О ПРОГРАММЕ</div>
+          <div class="section-sub">NEXUS Game Launcher</div>
+        </div>
+      </div>
+
+      <div class="settings-card" style="text-align:center;padding:32px">
+        <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:900;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px">VAULT</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-bottom:20px">Game Launcher</div>
+        <div class="version-badge">v1.0.0 · STABLE</div>
+        <div style="margin-top:24px">
+          <div class="stats-grid">
+            <div class="stat-tile">
+              <div class="stat-num" id="statGames">—</div>
+              <div class="stat-label">ИГР</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-num" id="statHours">—</div>
+              <div class="stat-label">ЧАСОВ</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-num" id="statSteam">—</div>
+              <div class="stat-label">STEAM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Данные приложения</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Папка данных</span>
+            <span class="setting-label-hint" id="dataPath">%APPDATA%\vault-launcher</span>
+          </div>
+          <button class="folder-add-btn" onclick="openDataFolder()">📂 Открыть</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Экспорт библиотеки</span>
+            <span class="setting-label-hint">Сохранить список игр в JSON</span>
+          </div>
+          <button class="folder-add-btn" onclick="exportLibrary()">💾 Экспорт</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Импорт библиотеки</span>
+            <span class="setting-label-hint">Загрузить список игр из JSON</span>
+          </div>
+          <button class="folder-add-btn" onclick="importLibrary()">📥 Импорт</button>
+        </div>
+      </div>
+
+      <div class="settings-card" style="border-color:rgba(255,0,60,0.2)">
+        <div class="settings-card-title" style="color:#ff6666">Опасная зона</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Сбросить все настройки</span>
+            <span class="setting-label-hint">Вернуть заводские настройки (игры останутся)</span>
+          </div>
+          <button class="danger-btn" onclick="resetSettings()">⚠️ Сброс</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-label-text">Удалить все данные</span>
+            <span class="setting-label-hint">Удалить библиотеку, настройки, кэш</span>
+          </div>
+          <button class="danger-btn" onclick="nukeData()">💥 Удалить всё</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /settings-content -->
+</div><!-- /settings-wrap -->
+</main>
+
+<!-- Save bar -->
+<div class="save-bar" id="saveBar">
+  <span class="save-bar-text">Есть несохранённые изменения</span>
+  <div class="save-bar-actions">
+    <button class="btn-discard" onclick="discardChanges()">Отмена</button>
+    <button class="btn-save" onclick="saveSettings()">💾 СОХРАНИТЬ</button>
+  </div>
+</div>
+
+<script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+name: Build VAULT Launcher
+
+on:
+  push:
+    tags:
+      - 'v*'        # запускается когда пушишь тег типа v1.0.0
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # нужно для создания релиза
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows installer
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: "VAULT Launcher ${{ github.ref_name }}"
+          body: |
+            ## VAULT Launcher ${{ github.ref_name }}
+
+            ### Установка
+            Скачай `VAULT.Launcher.Setup.exe` и запусти — Node.js не нужен.
+
+            ### Portable версия
+            `VAULT.Launcher.exe` — запускается без установки.
+
+            ### Первый запуск
+            При первом запуске появится экран ввода RAWG API ключа.
+            Получи бесплатный ключ на [rawg.io/apidocs](https://rawg.io/apidocs)
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
