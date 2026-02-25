@@ -19,6 +19,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Show project structure
+        run: |
+          echo "=== Root files ==="
+          dir
+          echo "=== src/main ==="
+          dir src\main
+
       - name: Build Windows installer
         run: npm run build:win
         env:
