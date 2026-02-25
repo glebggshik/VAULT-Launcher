@@ -29,7 +29,7 @@ jobs:
         with:
           name: vault-launcher-windows
           path: dist/*.exe
-          retention-days: 30name: Build VAULT Launcher
+          retention-days: 30
 
 on:
   push:
