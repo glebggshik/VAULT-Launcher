@@ -2,6 +2,7 @@
 
 > Игровой лаунчер с glassmorphism UI для Steam и локальных игр.  
 > Поиск игр через Steam Store API + RAWG, трекинг времени, папки, темы.
+> 
 > Установщик по ссылке https://disk.yandex.ru/d/7YkoSqAFbcnvVg
 ---
 
